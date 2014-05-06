@@ -66,4 +66,4 @@ def addusr():
 
 def delusr():
     for i in users:
-        run("sudo userdel -r %s" % i[1])
+        sudo("userdel -r %s" % i[1])
