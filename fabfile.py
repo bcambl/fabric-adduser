@@ -36,11 +36,11 @@ from fabric.api import *
 env.hosts = ['server1', 'server2']
 
 # User List ['Full Name', 'UserID']
-users = [['First Last1', 'username1'],
-         ['First Last2', 'username2'],
-         ['First Last3', 'username3'],
-         ['First Last4', 'username4'],
-         ['First Last5', 'username5']]
+users = [['First Last1', 'Comment', 'username1'],
+         ['First Last2', 'Comment', 'username2'],
+         ['First Last3', 'Comment', 'username3'],
+         ['First Last4', 'Comment', 'username4'],
+         ['First Last5', 'Comment', 'username5']]
 
 # Group List (Comma Seperate for multiple groups ie: group1,group2,group3)
 group = 'groupname'
@@ -91,24 +91,25 @@ def addusr(pp=None):
         else:
             print("An error occured while adding group: %s" % group)
     for i in users:
-        if len(i) == 2:
+        if len(i) == 3:
             pw = generatepw()
             i.append(pw)
         with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):
-            sudo("adduser -c \"%s\" -m -G %s %s" % (i[0], group, i[1]))
-            crypted_password = crypt.crypt(i[2],
+            sudo("adduser -c \"%s - %s\" -m -G %s %s"
+                 % (i[0], i[1], group, i[2]))
+            crypted_password = crypt.crypt(i[3],
                                            crypt.mksalt(crypt.METHOD_CRYPT))
             sudo('usermod --password %s %s' % (crypted_password,
-                                               i[1]), pty=True)
+                                               i[2]), pty=True)
             # Modify the following rules to your needs: (Read chage manpage)
-            sudo("chage -E -1 -W 11 -m 7 -M 42 -I 30 -d now-44days %s" % i[1])
+            sudo("chage -E -1 -W 11 -m 7 -M 42 -I 30 -d now-44days %s" % i[2])
     print("\nUsers for %s\n" % env.host)
     for i in users:  # Print the list of Users with credentials
         print("%s" % i[0])
-        print("User: %s\nPassword: %s" % (i[1], i[2]))
+        print("User: %s\nPassword: %s" % (i[1], i[3]))
     if not pp:
         for i in users:
-            if len(i) == 3:
+            if len(i) == 4:
                 i.pop()
 
 
@@ -118,4 +119,4 @@ def delusr():
     :return: Nothing
     """
     for i in users:
-        sudo("userdel -r %s" % i[1])
+        sudo("userdel -r %s" % i[2])
