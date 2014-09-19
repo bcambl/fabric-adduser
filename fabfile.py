@@ -1,19 +1,27 @@
 # !/usr/bin/env python
-##################################################
+#############################################################
 # fabric-adduser
 # ==============
 #
 # Fabric script for adding multiple users to a list of hosts
-##################################################
+#############################################################
 __author__ = 'Blayne Campbell'
 __date__ = '3/25/14'
 
-import subprocess
+import random
+import string
 import crypt
 import sys
+import os
 import re
 
 from fabric.api import *
+
+# Password Complexity Settings
+uppercase = 4
+lowercase = 3
+numerals = 3
+special = 3
 
 # Target hosts
 env.hosts = ['server1', 'server2']
@@ -30,25 +38,23 @@ groups = 'group1,group2'
 
 
 def generatepw():
-    """ Generates a random password that meets the following Password criteria:
-        13 characters length
-        4 letters in uppercase
-        3 special character (!@#$&*)
-        3 numerals (0-9)
-        3 letters in lowercase
+    """ Generates a random password that meets the password criteria outlined
+    in the settings file:
     :return: Random password that meets criteria
     """
     # Only allow visual friendly characters to minimize user frustration
-    allowchar = 'abcdefghijkmnpqrstuvwxyz' \
-                'ABCDEFGHIJKLMNPQRSTUVWXYZ23456789!@#$&*'
+    allchars = string.ascii_letters + string.digits + '.!@#$%^&*'
+    allowchar = re.sub('[oOIl0]', '', allchars)
+    uppers = '.*[A-Z]' * uppercase
+    lowers = '.*[a-z]' * lowercase
+    numers = '.*[0-9]' * numerals
+    spchar = '.*[!@#$&*]' * special
+    pwlength = (uppercase + lowercase + numerals + special)
+    random.seed = (os.urandom(1024))
+    strongpw = re.compile(r'^(?=%s)(?=%s)(?=%s)(?=%s).{%s}$'
+                          % (uppers, lowers, numers, spchar, pwlength))
     while True:
-        usrpw = subprocess.Popen(['makepasswd', '-l 13', '-c %s' % allowchar],
-                                 stdout=subprocess.PIPE).stdout.read()
-        strongpw = re.compile(r'^(?=.*[A-Z].*[A-Z].*[A-Z].*[A-Z])'
-                              r'(?=.*[!@#$&*].*[!@#$&*].*[!@#$&*])'
-                              r'(?=.*[0-9].*[0-9].*[0-9])'
-                              r'(?=.*[a-z].*[a-z].*[a-z])'
-                              r'.{13}$')
+        usrpw = ''.join(random.choice(allowchar) for i in range(pwlength))
         if strongpw.match(usrpw):
             return usrpw
 

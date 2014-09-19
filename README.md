@@ -13,7 +13,6 @@ and change their temporary password or the account will turn inactive.
 
 #### Dependencies:
 
-- makepasswd utility
 - python-pip
 
 ```
@@ -28,10 +27,11 @@ Add users:
 $ fab adduser
 ```
 
-Add users with global password (same password set for all hosts):
+Add users with unique password for each host:
+(default: Same password on all hosts)
 
 ```
-$ fab adduser:gp=True
+$ fab adduser:gp=False
 ```
 
 Remove users and leave groups intact.
