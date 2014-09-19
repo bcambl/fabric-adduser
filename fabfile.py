@@ -26,7 +26,7 @@ users = [['First Last1', 'Comment', 'username1'],
          ['First Last5', 'Comment', 'username5']]
 
 # Group List (Comma Separated for multiple groups ie: group1,group2,group3)
-group = 'groupname'
+groups = 'group1,group2'
 
 
 def generatepw():
@@ -54,32 +54,33 @@ def generatepw():
 
 
 @task
-def adduser(gp=None):
+def adduser(gp=True):
     """ Adds Users specified by 'users' & creates group
     :param gp: Set True if password should be the same on all hosts
     :return: Nothing
 
     Usage:
-        Different password for each hosts:
-        $ fab adduser
         Global passwords across all hosts
-        $ fab adduser:gp=True
+        $ fab adduser
+        Different password for each hosts:
+        $ fab adduser:gp=False
     """
     with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):
-        addgroup = sudo("groupadd %s" % group)
-        if addgroup.return_code == 0:
-            print("Group added %s: " % group)
-        elif addgroup.return_code == 9:
-            print("Group already exists: %s" % group)
-        else:
-            print("An error occurred while adding group: %s" % group)
+        for group in groups.split(','):
+            addgroup = sudo("groupadd %s" % group)
+            if addgroup.return_code == 0:
+                print("Group added %s: " % group)
+            elif addgroup.return_code == 9:
+                print("Group already exists: %s" % group)
+            else:
+                print("An error occurred while adding group: %s" % group)
     for i in users:
         if len(i) == 3:
             pw = generatepw()
             i.append(pw)
         with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):
             sudo("adduser -c \"%s - %s\" -m -G %s %s"
-                 % (i[0], i[1], group, i[2]))
+                 % (i[0], i[1], groups, i[2]))
             crypted_password = crypt.crypt(i[3],
                                            crypt.mksalt(crypt.METHOD_CRYPT))
             sudo('usermod --password %s %s' % (crypted_password,
@@ -89,7 +90,7 @@ def adduser(gp=None):
     print("\nUsers for %s\n" % env.host)
     for i in users:  # Print the list of Users with credentials
         print("%s" % i[0])
-        print("User: %s\nPassword: %s" % (i[1], i[3]))
+        print("User: %s\nPassword: %s" % (i[2], i[3]))
     if not gp:
         for i in users:
             if len(i) == 4:
