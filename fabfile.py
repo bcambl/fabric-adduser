@@ -10,6 +10,7 @@ __date__ = '3/25/14'
 
 import subprocess
 import crypt
+import sys
 import re
 
 from fabric.api import *
@@ -93,6 +94,25 @@ def adduser(gp=None):
         for i in users:
             if len(i) == 4:
                 i.pop()
+
+
+@task
+def mod_comment(user=None, comment=None):
+    """ Add/Modify comment for user account
+    :param user: username
+    :param comment: New comment string
+    :return: Nothing
+    """
+    with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):
+        if all([user, comment]):
+            userchk = run("id %s" % user)
+            if userchk.return_code == 0:
+                sudo("usermod -c \"%s\" %s" % (comment, user))
+            else:
+                print("Account not found on server: %s" % env.host)
+        else:
+            sys.exit("\nInvalid Params:\nUser: %s\nComment: %s\n"
+                     % (user, comment))
 
 
 @task
