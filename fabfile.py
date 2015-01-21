@@ -23,10 +23,10 @@ lowercase = 3
 numerals = 3
 special = 3
 
-# Target hosts
+# Target Hosts
 env.hosts = ['server1', 'server2']
 
-# User List ['Full Name', 'UserID']
+# User List ['Full Name', 'Account Comment', 'UserID']
 users = [['First Last1', 'Comment', 'username1'],
          ['First Last2', 'Comment', 'username2'],
          ['First Last3', 'Comment', 'username3'],
@@ -72,21 +72,26 @@ def adduser(gp=True):
         $ fab adduser:gp=False
     """
     with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):
-        for group in groups.split(','):
-            addgroup = sudo("groupadd %s" % group)
-            if addgroup.return_code == 0:
-                print("Group added %s: " % group)
-            elif addgroup.return_code == 9:
-                print("Group already exists: %s" % group)
-            else:
-                print("An error occurred while adding group: %s" % group)
+        if groups:
+            for group in groups.split(','):
+                addgroup = sudo("groupadd %s" % group)
+                if addgroup.return_code == 0:
+                    print("Group added %s: " % group)
+                elif addgroup.return_code == 9:
+                    print("Group already exists: %s" % group)
+                else:
+                    print("An error occurred while adding group: %s" % group)
     for i in users:
         if len(i) == 3:
             pw = generatepw()
             i.append(pw)
         with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):
-            sudo("adduser -c \"%s - %s\" -m -G %s %s"
-                 % (i[0], i[1], groups, i[2]))
+            if groups:
+                sudo("adduser -c \"%s - %s\" -m -G %s %s"
+                     % (i[0], i[1], groups, i[2]))
+            else:
+                sudo("adduser -c \"%s - %s\" -m %s"
+                     % (i[0], i[1], i[2]))
             crypted_password = crypt.crypt(i[3],
                                            crypt.mksalt(crypt.METHOD_CRYPT))
             sudo('usermod --password %s %s' % (crypted_password,
